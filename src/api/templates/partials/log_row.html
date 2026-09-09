@@ -1,0 +1,11 @@
+<tr>
+    <td>{{ log.id }}</td>
+    <td>{{ log.log_timestamp[:19].replace('T', ' ') if log.log_timestamp else 'N/A' }}</td>
+    <td>{{ log.username }}</td>
+    <td>{{ log.SteamID }}</td>
+    <td>{{ log.reason_given or '-' }}</td>
+    <td>{{ log.punishment_duration }}</td>
+    <td>{{ log.server_name }}</td>
+    <td>{{ log.issued_by or '-' }}</td>
+    <td>{{ log.review or '-' }}</td>
+</tr>

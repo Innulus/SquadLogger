@@ -1,0 +1,52 @@
+/* 1. HTMX Loading States */
+/* This shows a subtle progress bar at the top of the page during HTMX requests */
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: inline;
+}
+.htmx-request.htmx-indicator {
+    display: inline;
+}
+
+/* 2. Custom Sidebar Transitions */
+/* Ensures the sidebar and main content slide together perfectly */
+#sidebar, main {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 3. Modern Scrollbar for Sidebar */
+#sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+#sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+    background: #e2e8f0; /* light gray */
+    border-radius: 10px;
+}
+
+#sidebar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+}
+
+/* 4. Content Fade-in Effect */
+/* When HTMX swaps content, this adds a smooth entry animation */
+#main-content {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 5. Utility for Alpine.js Cloaking */
+[x-cloak] { 
+    display: none !important; 
+}

@@ -1,0 +1,10 @@
+venv
+__pycache__
+.pytest_cache
+fastapiapp.db
+*.db
+*.db-shm
+*.db-wal
+.env
+spine-template.code-workspace
+.DS_Store

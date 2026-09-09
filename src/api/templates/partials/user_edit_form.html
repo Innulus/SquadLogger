@@ -1,0 +1,46 @@
+<tr id="user-row-{{ user.id }}" class="bg-blue-50/30 dark:bg-blue-950/10 backdrop-blur-md transition-all duration-300">
+    
+    <td class="py-4 px-6 align-middle" colspan="1">
+        <input type="text" name="username" value="{{ user.username }}" required
+               class="glass-input w-full px-3 py-1.5 rounded-xl font-bold text-xs tracking-wide text-gray-900 dark:text-white">
+        <input type="email" name="email" value="{{ user.email }}" required
+               class="glass-input w-full px-3 py-1.5 rounded-xl font-medium text-xs tracking-wide text-gray-500 dark:text-zinc-400 mono mt-2"
+               hx-include="closest tr" />
+    </td>
+    
+    <td class="py-4 px-6 align-middle">
+        <select name="permissions" 
+                class="glass-input px-3 py-1.5 rounded-xl font-bold text-[10px] uppercase tracking-wider mono text-purple-600 dark:text-purple-400 bg-transparent cursor-pointer">
+            <option value="Admin" {% if user.permissions == "Admin" %}selected{% endif %}>Admin</option>
+            <option value="User" {% if user.permissions != "Admin" %}selected{% endif %}>User</option>
+        </select>
+    </td>
+    
+    <td class="py-4 px-6 text-gray-400 dark:text-zinc-600 mono text-xs align-middle">
+        {{ user.created_at }}
+    </td>
+    
+    <td class="py-4 px-6 text-right whitespace-nowrap align-middle">
+        <div class="inline-flex items-center gap-2">
+            <button hx-put="/dashboard/users/update/{{ user.id }}" 
+                    hx-target="#user-row-{{ user.id }}" 
+                    hx-swap="outerHTML"
+                    hx-include="closest tr"
+                    class="tab-active p-2 rounded-xl text-white transition-all active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </button>
+            
+            <button type="button"
+                    hx-get="/dashboard/users/row/{{ user.id }}"
+                    hx-target="#user-row-{{ user.id }}"
+                    hx-swap="outerHTML"
+                    class="glass-bubble p-2 text-slate-400 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </td>
+</tr>

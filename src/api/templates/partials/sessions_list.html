@@ -1,0 +1,66 @@
+<div class="animate-in fade-in duration-500 space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 dark:border-zinc-800 pb-4">
+        <div>
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Active Sessions</h2>
+            <p class="text-sm text-gray-500 dark:text-zinc-500 mt-1">Authorized devices and locations.</p>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-zinc-800">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50 dark:bg-zinc-900/50 text-gray-500 dark:text-zinc-400 uppercase text-[10px] font-bold tracking-widest border-b border-gray-200 dark:border-zinc-800">
+                <tr>
+                    <th class="px-6 py-4">User</th>
+                    <th class="px-6 py-4">Device / Client Platform</th>
+                    <th class="px-6 py-4">Initialized</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
+                {% for session in active_sessions %}
+                <tr class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
+                                {{ session.username[0]|upper }}
+                            </div>
+                            <span class="font-semibold text-gray-900 dark:text-zinc-100">{{ session.username }}</span>
+                        </div>
+                    </td>
+                    
+                    <td class="px-6 py-4 max-w-xs">
+                        <div class="text-xs text-gray-600 dark:text-zinc-400 truncate font-medium mono" title="{{ session.user_agent }}">
+                            {{ session.user_agent if session.user_agent else "Unknown Terminal Environment" }}
+                        </div>
+                    </td>
+
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-xs text-gray-500 dark:text-zinc-500 mono">
+                            {{ session.created_at }}
+                        </span>
+                    </td>
+
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if session.session_token == request.cookies.get('session_token') %}
+                            <span class="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded text-[10px] font-bold uppercase tracking-wider">This Device</span>
+                        {% else %}
+                            <span class="text-gray-400 dark:text-zinc-500 text-xs italic">Other Node</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                        <button hx-post="/dashboard/revoke-session/{{ session.id }}"
+                                hx-confirm="Terminate this session?"
+                                hx-target="closest tr"
+                                hx-swap="outerHTML"
+                                class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-bold text-xs uppercase tracking-tighter transition-colors">
+                            Revoke
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" 
+      x-data="{ 
+        darkMode: localStorage.getItem('theme') === 'dark',
+        sidebarOpen: true, 
+        activePath: window.location.pathname,
+        showModal: new URLSearchParams(window.location.search).get('error') === 'already_logged_in'
+      }" 
+      x-init="$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'))"
+      @htmx:history-restore.window="activePath = window.location.pathname"
+      :class="darkMode ? 'dark' : ''">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spine V1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        zinc: { 950: '#09090b' }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+    document.body.addEventListener('htmx:responseError', function (evt) {
+        if (evt.detail.xhr.status === 401) {
+        // Redirect to the login page
+        window.location.href = '/login';
+        }
+    });
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* THE CARVED STONE TRENCH */
+        .sidebar-trench {
+            background-color: #e2e8f0;
+            box-shadow: inset -10px 0 20px -10px rgba(0,0,0,0.2), 
+                        inset 2px 0 5px rgba(0,0,0,0.05);
+            border-right: 1px solid #cbd5e1;
+        }
+
+        .dark .sidebar-trench {
+            background-color: #050506;
+            box-shadow: inset -15px 0 30px -15px rgba(0,0,0,0.9),
+                        inset 1px 0 2px rgba(255,255,255,0.05);
+            border-right: 1px solid #000;
+        }
+
+        /* LIQUID GLASS BUBBLE BUTTONS */
+        .glass-bubble {
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 50px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Inactive: Frosted Glass */
+        .glass-bubble:not(.tab-active) {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05),
+                        inset 0 1px 1px rgba(255, 255, 255, 0.4);
+        }
+        .dark .glass-bubble:not(.tab-active) {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Active: The "Liquid" State */
+        .tab-active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(37, 99, 235, 0.9) 100%) !important;
+            color: white !important;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3),
+                        inset 0 12px 10px -10px rgba(255, 255, 255, 0.6),
+                        inset 0 -10px 10px -5px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05) translateY(-2px);
+            border: 1px solid rgba(255, 255, 255, 0.5) !important;
+        }
+
+        /* Hover Jiggle */
+        .glass-bubble:hover:not(.tab-active) {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+        .dark .glass-bubble:hover:not(.tab-active) {
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        /* Specular Highlight */
+        .glass-bubble::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 15%;
+            width: 30%;
+            height: 20%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    </style>
+</head>
+
+<body class="bg-slate-300 dark:bg-zinc-950 text-gray-800 dark:text-zinc-100 transition-colors duration-300 antialiased min-h-screen flex flex-col">
+    
+    <div x-show="showModal" 
+         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" 
+         x-transition.opacity x-cloak>
+         <div class="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl p-8 rounded-[2rem] shadow-2xl max-w-sm w-full border border-white/20 text-center" @click.away="showModal = false">
+            <div class="w-16 h-16 bg-blue-500/20 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 glass-bubble">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-black uppercase italic tracking-tighter text-slate-900 dark:text-white mb-2">Already Logged In</h3>
+            <p class="text-slate-600 dark:text-zinc-400 mono text-xs mb-6">Active session detected. Clear current node to re-authenticate.</p>
+            <button @click="showModal = false; window.history.replaceState({}, document.title, window.location.pathname);" 
+                    class="tab-active px-6 py-2.5 rounded-full font-bold uppercase text-xs tracking-widest w-full">
+                Return to Workspace
+            </button>
+        </div>
+    </div>
+
+    <nav class="fixed top-0 z-50 w-full bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border-b border-white/20 dark:border-white/5 shadow-sm h-16 flex items-center">
+        <div class="px-6 w-full flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button @click="sidebarOpen = !sidebarOpen" class="p-2 text-slate-500 hover:text-blue-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+               <a href="/dashboard" class="group">
+                    <span class="text-xl font-black tracking-tighter uppercase italic transition-all group-hover:text-blue-500">
+                        Spine<span class="text-blue-600 underline decoration-wavy underline-offset-4">V1</span>
+                    </span>
+                </a>
+            </div>
+            
+            {# 
+                {% if 1 is 1 %}
+                    <div class="flex items-center gap-4">
+                        <div class="glass-bubble px-4 py-1.5 flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                            <span class="text-sm font-bold mono">{{ "Hardcoded Username Fix later" }}</span>
+                        </div>
+                        <a href="/logout" class="glass-bubble p-2 text-slate-500 hover:text-red-500 transition-colors" title="Logout">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        </a>
+                    </div>
+                {% else %}
+                    <a href="/login" class="glass-bubble px-6 py-2 text-xs font-bold uppercase tracking-widest text-slate-600 dark:text-zinc-400">Sign In</a>
+                {% endif %}
+            #}
+        </div>
+    </nav>
+
+    <div class="flex min-h-screen w-full overflow-x-hidden">
+
+        <aside id="sidebar" 
+               class="fixed top-0 left-0 z-40 h-screen pt-20 transition-transform duration-300 ease-in-out sidebar-trench w-64"
+               :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+            <div class="h-full px-4 pt-6 space-y-10">
+                <div class="px-4">
+                    <span class="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-zinc-600">Modules</span>
+                </div>
+                <ul class="space-y-6">
+                    <li>
+                        <a href="/dashboard" hx-get="/dashboard" hx-target="#main-content" hx-push-url="true" @click="activePath = '/dashboard'"
+                           class="glass-bubble flex items-center p-4 font-bold text-xs tracking-[0.2em] uppercase"
+                           :class="activePath === '/dashboard' ? 'tab-active' : 'text-slate-600 dark:text-zinc-400'">
+                            <span class="ml-2">Dashboard</span>
+                        </a>
+                    </li>
+                    {% if permissions == "Admin" %}
+                    <li>
+                        <a href="/dashboard/users" hx-get="/dashboard/users" hx-target="#main-content" hx-push-url="true" @click="activePath = '/dashboard/users'"
+                           class="glass-bubble flex items-center p-4 font-bold text-xs tracking-[0.2em] uppercase"
+                           :class="activePath.startsWith('/dashboard/users') ? 'tab-active' : 'text-slate-600 dark:text-zinc-400'">
+                            <span class="ml-2">Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/dashboard/session-management" hx-get="/dashboard/session-management" hx-target="#main-content" hx-push-url="true" @click="activePath = '/dashboard/session-management'"
+                           class="glass-bubble flex items-center p-4 font-bold text-xs tracking-[0.2em] uppercase"
+                           :class="activePath.startsWith('/dashboard/session-management') ? 'tab-active' : 'text-slate-600 dark:text-zinc-400'">
+                            <span class="ml-2">Sessions</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </aside>
+
+        <main class="flex-1 pt-24 p-4 sm:p-8 transition-all duration-300 ease-in-out w-full flex items-center"
+              :class="sidebarOpen ? 'xl:ml-64' : 'xl:ml-0'">
+            <div class="w-full max-w-7xl mx-auto flex justify-center">
+                <div class="w-full bg-white/40 dark:bg-white/5 backdrop-blur-md p-6 sm:p-10 rounded-[2rem] border border-white/30 dark:border-white/10 shadow-2xl">
+                    <div id="main-content">
+                        {% if active_fragment %}
+                            {% include active_fragment %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div> <button @click="darkMode = !darkMode" 
+            class="glass-bubble fixed bottom-8 right-8 z-[100] w-14 h-14 flex items-center justify-center text-slate-600 dark:text-yellow-400 transition-all active:scale-90"
+            aria-label="Toggle Theme">
+        <svg x-show="!darkMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l.707.707M6.343 6.343l.707.707M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <svg x-show="darkMode" x-cloak class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+    </button>
+
+    <script>
+        document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
+            if (evt.detail.xhr.status === 401 || evt.detail.xhr.status === 403) {
+                evt.detail.shouldSwap = true;
+                evt.detail.isError = false;
+            }
+        });
+    </script>
+</body>
+</html>

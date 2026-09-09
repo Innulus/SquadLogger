@@ -1,0 +1,57 @@
+<div class="space-y-6 animate-in fade-in duration-500">
+    <div class="p-8 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-[2rem] shadow-2xl transition-colors duration-300">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl glass-bubble">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tight">User Management</h2>
+                    <p class="text-xs text-slate-600 dark:text-zinc-400 mono mt-0.5">Manage administrative access keys and profile nodes.</p>
+                </div>
+            </div>
+            
+            <button hx-get="/dashboard/users/create" 
+                    hx-target="#user-form-container" 
+                    hx-swap="innerHTML transition:true"
+                    class="tab-active sm:w-auto px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Create User
+            </button>
+        </div>
+    </div>
+
+    <div id="user-form-container" class="empty:hidden transition-all duration-500 ease-in-out"></div>
+
+    <div class="bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/30 dark:border-white/10 rounded-[2rem] shadow-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-white/20 dark:border-white/5 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 dark:text-zinc-500 mono bg-slate-100/50 dark:bg-zinc-900/30">
+                        <th class="py-4 px-6">Identity Profile</th>
+                        <th class="py-4 px-6">Permissions</th>
+                        <th class="py-4 px-6">Date Created</th>
+                        <th class="py-4 px-6 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/10 dark:divide-white/5 text-sm">
+                    {% if users %}
+                        {% for user in users %}
+                            {% include "partials/user_row.html" %}
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="py-12 text-center text-slate-400 dark:text-zinc-500 font-bold mono text-xs">
+                                ⚠️ No registered structural user records located in the database environment.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

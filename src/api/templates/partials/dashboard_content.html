@@ -1,0 +1,89 @@
+<div class="space-y-6">
+    <div class="p-8 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[2rem] shadow-sm transition-colors duration-300">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Dashboard Overview</h2>
+        </div>
+        <p class="text-gray-600 dark:text-zinc-400 leading-relaxed mono text-sm">
+            Welcome back. All active microservices are reporting healthy statuses. Environment routing handled via HTMX frame swaps.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500 mono">API Throughput</span>
+            <div class="text-2xl font-black mt-1 text-slate-800 dark:text-zinc-100 italic">4.2k <span class="text-xs font-normal not-italic text-green-500">req/m</span></div>
+        </div>
+        <div class="p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500 mono">Avg Response Latency</span>
+            <div class="text-2xl font-black mt-1 text-slate-800 dark:text-zinc-100 italic">18ms <span class="text-xs font-normal not-italic text-blue-500">p99</span></div>
+        </div>
+        <div class="p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-2xl shadow-sm">
+            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500 mono">Active WebSockets</span>
+            <div class="text-2xl font-black mt-1 text-slate-800 dark:text-zinc-100 italic">142 <span class="text-xs font-normal not-italic text-emerald-500">live</span></div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <div class="p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[2rem] shadow-sm">
+            <h3 class="text-xs font-black uppercase tracking-[0.2em] mb-4 text-slate-500 dark:text-zinc-400 mono">Environment Health</h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-xs font-bold mono mb-1">
+                        <span>CPU Allocation</span>
+                        <span>24%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-blue-500 h-full rounded-full" style="width: 24%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-bold mono mb-1">
+                        <span>Memory Load</span>
+                        <span>68%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-amber-500 h-full rounded-full" style="width: 68%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-xs font-bold mono mb-1">
+                        <span>Database Connection Pool</span>
+                        <span>8 / 20 Active</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-emerald-500 h-full rounded-full" style="width: 40%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[2rem] shadow-sm flex flex-col justify-between">
+            <div>
+                <h3 class="text-xs font-black uppercase tracking-[0.2em] mb-4 text-slate-500 dark:text-zinc-400 mono">Live Activity Log</h3>
+                <div class="space-y-2 font-bold mono text-[11px]">
+                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-100 dark:border-zinc-800">
+                        <span class="text-blue-500">[INFO]</span> 14:42:11 - GET /api/v1/users/profile - 200 OK
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-100 dark:border-zinc-800">
+                        <span class="text-emerald-500">[INFO]</span> 14:40:05 - Async worker flushed buffer pool successfully.
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-red-500/5 dark:bg-red-500/10 text-red-500 border border-red-500/10">
+                        <span class="text-red-500">[WARN]</span> 14:38:59 - Rate limit threshold neared for client node: 192.168.1.45
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-slate-100 dark:border-zinc-800 flex justify-between items-center text-xs">
+                <span class="text-slate-400 dark:text-zinc-500 font-bold mono">Debug Level: Verbose</span>
+                <button class="text-blue-500 font-black tracking-wider uppercase hover:underline">Flush Logs</button>
+            </div>
+        </div>
+
+    </div>
+</div>

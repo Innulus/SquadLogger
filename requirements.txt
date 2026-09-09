@@ -1,0 +1,8 @@
+fastapi[standard]
+pytest
+python-dotenv
+uvicorn
+itsdangerous
+cryptography
+argon2-cffi
+passlib
