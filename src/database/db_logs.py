@@ -13,9 +13,7 @@ def create_main_log(
     username: str,
     punishment_duration: int,
     server_name: str,
-    reason_given: Optional[str] = None,
-    issued_by: Optional[str] = None,
-    review: Optional[str] = None,
+    reason_given: Optional[str] = None
 ):
     timestamp = datetime.now(timezone.utc).isoformat()
 
@@ -24,9 +22,9 @@ def create_main_log(
             """
             INSERT INTO main_logs (
                 log_timestamp, username, SteamID, reason_given,
-                punishment_duration, server_name, issued_by, review
+                punishment_duration, server_name
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             RETURNING *;
             """,
             (
@@ -35,9 +33,7 @@ def create_main_log(
                 steam_id,
                 reason_given,
                 punishment_duration,
-                server_name,
-                issued_by,
-                review,
+                server_name
             ),
         )
         new_log = cursor.fetchall()
@@ -111,16 +107,14 @@ def update_main_log(
     username: str,
     punishment_duration: int,
     server_name: str,
-    reason_given: Optional[str] = None,
-    issued_by: Optional[str] = None,
-    review: Optional[str] = None,
+    reason_given: Optional[str] = None
 ):
     with conn:
         cursor = conn.execute(
             """
             UPDATE main_logs 
             SET SteamID = ?, username = ?, punishment_duration = ?, 
-                server_name = ?, reason_given = ?, issued_by = ?, review = ?
+                server_name = ?, reason_given = ?
             WHERE id = ?
             RETURNING *;
             """,
@@ -130,9 +124,7 @@ def update_main_log(
                 punishment_duration,
                 server_name,
                 reason_given,
-                issued_by,
-                review,
-                log_id,
+                log_id
             ),
         )
         updated_log = cursor.fetchall()
@@ -147,17 +139,3 @@ def delete_main_log(conn: sqlite3.Connection, log_id: int):
     except sqlite3.Error:
         return False
 
-
-def review_main_log(conn: sqlite3.Connection, log_id: int, reviewer: str):
-    with conn:
-        cursor = conn.execute(
-            """
-            UPDATE main_logs 
-            SET review = ?
-            WHERE id = ?
-            RETURNING *;
-            """,
-            (reviewer, log_id),
-        )
-        updated_log = cursor.fetchall()
-    return dict(updated_log[0]) if updated_log else None

@@ -5,9 +5,7 @@ CREATE TABLE IF NOT EXISTS main_logs (
     SteamID TEXT NOT NULL,
     reason_given TEXT,
     punishment_duration INTEGER NOT NULL,
-    server_name TEXT NOT NULL, 
-    issued_by TEXT,
-    review TEXT
+    server_name TEXT NOT NULL
 );
 
 

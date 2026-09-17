@@ -16,9 +16,7 @@ def test_create_log_success(client):
         "username": "Gamer123",
         "punishment_duration": 60,
         "server_name": "US-Central",
-        "reason_given": "Exploiting",
-        "issued_by": "ModA",
-        "review": None,
+        "reason_given": "Exploiting"
     }
     response = client.post("/logs/", json=payload)
     assert response.status_code == status.HTTP_201_CREATED
@@ -97,27 +95,6 @@ def test_update_log_flow(client):
 
     # Test update 404 for non-existent ID
     bad_res = client.put("/logs/999999", json=update_payload)
-    assert bad_res.status_code == status.HTTP_404_NOT_FOUND
-
-
-def test_review_log_flow(client):
-    create_res = client.post(
-        "/logs/",
-        json={
-            "steam_id": "STEAM_REV",
-            "username": "NeedReview",
-            "punishment_duration": 45,
-            "server_name": "Server1",
-        },
-    )
-    log_id = create_res.json()["id"]
-
-    review_res = client.patch(f"/logs/{log_id}/review", json={"reviewer": "LeadAdmin"})
-    assert review_res.status_code == status.HTTP_200_OK
-    assert review_res.json()["review"] == "LeadAdmin"
-
-    # Test review 404
-    bad_res = client.patch("/logs/999999/review", json={"reviewer": "LeadAdmin"})
     assert bad_res.status_code == status.HTTP_404_NOT_FOUND
 
 

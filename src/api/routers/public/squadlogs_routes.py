@@ -10,7 +10,6 @@ from database.db_logs import (
     delete_main_log,
     get_paginated_main_logs,
     update_main_log,
-    review_main_log
 )
 from services.db_connection import get_db
 
@@ -41,8 +40,6 @@ class LogCreateUpdate(BaseModel):
     punishment_duration: int
     server_name: str
     reason_given: Optional[str] = None
-    issued_by: Optional[str] = None
-    review: Optional[str] = None
 
 
 class ReviewRequest(BaseModel):
@@ -92,9 +89,7 @@ async def create_log_endpoint(
         username=payload.username, 
         punishment_duration=payload.punishment_duration, 
         server_name=payload.server_name,
-        reason_given=payload.reason_given,
-        issued_by=payload.issued_by,
-        review=payload.review
+        reason_given=payload.reason_given
     )
     
     log_id = new_log.get("id") if isinstance(new_log, dict) else "unknown"
@@ -135,9 +130,7 @@ async def update_log_endpoint(
         username=payload.username, 
         punishment_duration=payload.punishment_duration, 
         server_name=payload.server_name,
-        reason_given=payload.reason_given,
-        issued_by=payload.issued_by,
-        review=payload.review
+        reason_given=payload.reason_given
     )
 
     if not updated_log:
@@ -145,28 +138,4 @@ async def update_log_endpoint(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log not found")
 
     logger.info("Successfully updated log ID %d by client '%s'", log_id, authorized_client)
-    return updated_log
-
-
-@router.patch("/{log_id}/review")
-async def apply_review_endpoint(
-    log_id: int,
-    payload: ReviewRequest,
-    db: sqlite3.Connection = Depends(get_db),
-    authorized_client: str = Depends(verify_api_code_and_log)
-):
-    logger.info(
-        "Client '%s' applying review for log ID %d (Reviewer: %s)",
-        authorized_client,
-        log_id,
-        payload.reviewer
-    )
-    
-    updated_log = review_main_log(db, log_id, payload.reviewer)
-    
-    if not updated_log:
-        logger.warning("Failed to review log ID %d: Not found", log_id)
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log not found")
-        
-    logger.info("Successfully applied review to log ID %d by client '%s'", log_id, authorized_client)
     return updated_log

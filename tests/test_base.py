@@ -6,7 +6,6 @@ from database.db_logs import (
     get_main_log_by_id,
     update_main_log,
     delete_main_log,
-    review_main_log,
 )
 
 
@@ -18,7 +17,6 @@ def test_create_and_get_log_by_id(test_db):
         punishment_duration=60,
         server_name="US-East",
         reason_given="Rule violation",
-        issued_by="Admin1",
     )
 
     assert log is not None
@@ -49,28 +47,11 @@ def test_update_main_log(test_db):
         punishment_duration=120,
         server_name="EU-North",
         reason_given="Updated Reason",
-        issued_by="Admin2",
-        review="Under Review",
     )
 
     assert updated["username"] == "UpdatedName"
     assert updated["SteamID"] == "STEAM_0:1:22222"
     assert updated["punishment_duration"] == 120
-    assert updated["review"] == "Under Review"
-
-
-def test_review_main_log(test_db):
-    log = create_main_log(
-        conn=test_db,
-        steam_id="STEAM_0:1:33333",
-        username="Reviewee",
-        punishment_duration=15,
-        server_name="US-West",
-    )
-
-    reviewed = review_main_log(test_db, log_id=log["id"], reviewer="SeniorAdmin")
-    assert reviewed is not None
-    assert reviewed["review"] == "SeniorAdmin"
 
 
 def test_delete_main_log(test_db):
@@ -90,6 +71,7 @@ def test_delete_main_log(test_db):
 def test_get_paginated_main_logs(test_db, monkeypatch):
     # Set chunk size to 3 for predictable pagination math
     from services.config import settings
+
     monkeypatch.setattr(settings, "MAX_LOG_CHUNK_SIZE", 3)
 
     for i in range(8):
