@@ -1,126 +1,172 @@
+import logging
 import sqlite3
-from typing import Optional
-from fastapi import APIRouter, Depends, Form, Request, Response, status
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from services.config import BASE_DIR
-from services.security import verify_api_code_and_log
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-# Assuming you have your DB dependency in a file called db_connection.py
+from services.security import verify_api_code_and_log
 from database.db_logs import (
     create_main_log,
     delete_main_log,
-    get_all_main_logs,
+    get_paginated_main_logs,
     update_main_log,
     review_main_log
 )
-from services.db_connection import get_db, get_db_context
+from services.db_connection import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/logs", tags=["Logs"])
-templates = Jinja2Templates(directory=BASE_DIR / "api" / "templates")
 
 
-@router.get("/", response_class=HTMLResponse)
-async def read_logs_page(request: Request, db: sqlite3.Connection = Depends(get_db)):
-    logs = get_all_main_logs(db)
-    return templates.TemplateResponse(
-        request=request,
-        name="logs.html",
-        context={"logs": logs},
+# --- Schemas ---
+
+class PaginationMeta(BaseModel):
+    page: int
+    page_size: int
+    total_count: int
+    total_pages: int
+    has_next: bool
+    has_previous: bool
+
+
+class PaginatedLogsResponse(BaseModel):
+    items: List[Dict[str, Any]]
+    pagination: PaginationMeta
+
+
+class LogCreateUpdate(BaseModel):
+    steam_id: str
+    username: str
+    punishment_duration: int
+    server_name: str
+    reason_given: Optional[str] = None
+    issued_by: Optional[str] = None
+    review: Optional[str] = None
+
+
+class ReviewRequest(BaseModel):
+    reviewer: str
+
+
+# --- Endpoints ---
+
+@router.get("/heartbeat")
+async def get_heartbeat():
+    logger.debug("Heartbeat check requested.")
+    return {"status": "ok"}
+
+
+@router.get("/", response_model=PaginatedLogsResponse)
+async def read_logs_endpoint(
+    page: int = Query(1, ge=1, description="Page number to fetch"),
+    db: sqlite3.Connection = Depends(get_db)
+):
+    logger.info("Fetching paginated logs: page=%d", page)
+    result = get_paginated_main_logs(conn=db, page=page)
+    logger.debug(
+        "Retrieved %d logs on page %d (total: %d)",
+        len(result.get("items", [])),
+        page,
+        result.get("pagination", {}).get("total_count", 0)
     )
+    return result
 
 
-@router.post("/", response_class=HTMLResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_log_endpoint(
-    request: Request,
-    steam_id: str = Form(...),
-    username: str = Form(...),
-    punishment_duration: int = Form(...),
-    server_name: str = Form(...),
-    reason_given: Optional[str] = Form(None),
-    issued_by: Optional[str] = Form(None),
-    review: Optional[str] = Form(None),
+    payload: LogCreateUpdate,
     db: sqlite3.Connection = Depends(get_db),
     authorized_client: str = Depends(verify_api_code_and_log)
 ):
+    logger.info(
+        "Client '%s' creating log for username='%s' (SteamID=%s)",
+        authorized_client,
+        payload.username,
+        payload.steam_id
+    )
+    
     new_log = create_main_log(
         conn=db, 
-        steam_id=steam_id, 
-        username=username, 
-        punishment_duration=punishment_duration, 
-        server_name=server_name,
-        reason_given=reason_given,
-        issued_by=issued_by,
-        review=review
+        steam_id=payload.steam_id, 
+        username=payload.username, 
+        punishment_duration=payload.punishment_duration, 
+        server_name=payload.server_name,
+        reason_given=payload.reason_given,
+        issued_by=payload.issued_by,
+        review=payload.review
     )
-
-    # Return just the HTML row snippet for HTMX to append to the table
-    return templates.TemplateResponse(
-        request=request,
-        name="partials/log_row.html",
-        context={"log": new_log},
-    )
+    
+    log_id = new_log.get("id") if isinstance(new_log, dict) else "unknown"
+    logger.info("Successfully created log ID %s by client '%s'", log_id, authorized_client)
+    return new_log
 
 
-@router.delete("/{log_id}", response_class=Response)
+@router.delete("/{log_id}")
 async def delete_log_endpoint(
     log_id: int, 
     db: sqlite3.Connection = Depends(get_db), 
     authorized_client: str = Depends(verify_api_code_and_log)
 ):
+    logger.info("Client '%s' attempting to delete log ID %d", authorized_client, log_id)
     success = delete_main_log(db, log_id)
-    if success:
-        # Return an empty 200 OK response.
-        # HTMX will swap the target row with this empty response (deleting it).
-        return Response(status_code=status.HTTP_200_OK)
-    return Response(status_code=status.HTTP_400_BAD_REQUEST)
+    
+    if not success:
+        logger.warning("Failed to delete log ID %d: Not found", log_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log not found")
+        
+    logger.info("Successfully deleted log ID %d by client '%s'", log_id, authorized_client)
+    return {"success": True, "deleted_id": log_id}
 
-@router.put("/{log_id}", response_class=HTMLResponse)
+
+@router.put("/{log_id}")
 async def update_log_endpoint(
-    request: Request,
     log_id: int,
-    steam_id: str = Form(...),
-    username: str = Form(...),
-    punishment_duration: int = Form(...),
-    server_name: str = Form(...),
-    reason_given: Optional[str] = Form(None),
-    issued_by: Optional[str] = Form(None),
-    review: Optional[str] = Form(None),
+    payload: LogCreateUpdate,
     db: sqlite3.Connection = Depends(get_db),
     authorized_client: str = Depends(verify_api_code_and_log)
 ):
+    logger.info("Client '%s' attempting to update log ID %d", authorized_client, log_id)
+    
     updated_log = update_main_log(
         conn=db, 
         log_id=log_id,
-        steam_id=steam_id, 
-        username=username, 
-        punishment_duration=punishment_duration, 
-        server_name=server_name,
-        reason_given=reason_given,
-        issued_by=issued_by,
-        review=review
+        steam_id=payload.steam_id, 
+        username=payload.username, 
+        punishment_duration=payload.punishment_duration, 
+        server_name=payload.server_name,
+        reason_given=payload.reason_given,
+        issued_by=payload.issued_by,
+        review=payload.review
     )
 
     if not updated_log:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        logger.warning("Failed to update log ID %d: Not found", log_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log not found")
 
-    # Return the updated HTML row snippet for HTMX to swap into the table
-    return templates.TemplateResponse(
-        request=request,
-        name="partials/log_row.html",
-        context={"log": updated_log},
-    )
+    logger.info("Successfully updated log ID %d by client '%s'", log_id, authorized_client)
+    return updated_log
 
-@router.patch("/{log_id}/review", response_class=Response)
+
+@router.patch("/{log_id}/review")
 async def apply_review_endpoint(
     log_id: int,
-    reviewer: str = Form(...),
+    payload: ReviewRequest,
     db: sqlite3.Connection = Depends(get_db),
     authorized_client: str = Depends(verify_api_code_and_log)
 ):
-    updated_log = review_main_log(db, log_id, reviewer)
+    logger.info(
+        "Client '%s' applying review for log ID %d (Reviewer: %s)",
+        authorized_client,
+        log_id,
+        payload.reviewer
+    )
+    
+    updated_log = review_main_log(db, log_id, payload.reviewer)
     
     if not updated_log:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        logger.warning("Failed to review log ID %d: Not found", log_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log not found")
         
-    return Response(status_code=status.HTTP_200_OK)
+    logger.info("Successfully applied review to log ID %d by client '%s'", log_id, authorized_client)
+    return updated_log

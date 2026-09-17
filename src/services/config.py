@@ -6,13 +6,9 @@ from pathlib import Path
 class Settings(BaseSettings):
     PROD_DB_PATH: str 
     WEB_PORT: int
-    COOKIE_TTL: int
-    SECRET_KEY: str
-    ENVIRONMENT: str 
-    GOOGLE_LOGIN: str
-    DISCORD_LOGIN: str
-    USER_CAN_DELETE_SELF: bool
+    MAX_LOG_CHUNK_SIZE: int
     API_SECRET_CODE: str
+    ENVIRONMENT: str 
     
     model_config = SettingsConfigDict(env_file=".env")
 
