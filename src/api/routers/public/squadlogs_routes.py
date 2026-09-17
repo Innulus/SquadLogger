@@ -1,17 +1,19 @@
 import logging
 import sqlite3
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import Any
 
-from services.security import verify_api_code_and_log
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
+
 from database.db_logs import (
     create_main_log,
     delete_main_log,
+    get_main_log_by_id,
     get_paginated_main_logs,
     update_main_log,
 )
 from services.db_connection import get_db
+from services.security import verify_api_code_and_log
 
 logger = logging.getLogger(__name__)
 
@@ -30,16 +32,16 @@ class PaginationMeta(BaseModel):
 
 
 class PaginatedLogsResponse(BaseModel):
-    items: List[Dict[str, Any]]
+    items: list[dict[str, Any]]
     pagination: PaginationMeta
 
 
 class LogCreateUpdate(BaseModel):
     steam_id: str
     username: str
-    punishment_duration: int
+    punishment_duration: str
     server_name: str
-    reason_given: Optional[str] = None
+    reason_given: str | None = None
 
 
 class ReviewRequest(BaseModel):
@@ -69,6 +71,20 @@ async def read_logs_endpoint(
     )
     return result
 
+@router.get("/{log_id}", status_code=status.HTTP_200_OK)
+async def get_log_by_id_endpoint(
+    log_id: int,
+    db: sqlite3.Connection = Depends(get_db)
+):
+    log = get_main_log_by_id(db, log_id)
+
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Log #{log_id} not found",
+        )
+
+    return log
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_log_endpoint(
@@ -82,16 +98,16 @@ async def create_log_endpoint(
         payload.username,
         payload.steam_id
     )
-    
+
     new_log = create_main_log(
-        conn=db, 
-        steam_id=payload.steam_id, 
-        username=payload.username, 
-        punishment_duration=payload.punishment_duration, 
+        conn=db,
+        steam_id=payload.steam_id,
+        username=payload.username,
+        punishment_duration=payload.punishment_duration,
         server_name=payload.server_name,
         reason_given=payload.reason_given
     )
-    
+
     log_id = new_log.get("id") if isinstance(new_log, dict) else "unknown"
     logger.info("Successfully created log ID %s by client '%s'", log_id, authorized_client)
     return new_log
@@ -99,17 +115,17 @@ async def create_log_endpoint(
 
 @router.delete("/{log_id}")
 async def delete_log_endpoint(
-    log_id: int, 
-    db: sqlite3.Connection = Depends(get_db), 
+    log_id: int,
+    db: sqlite3.Connection = Depends(get_db),
     authorized_client: str = Depends(verify_api_code_and_log)
 ):
     logger.info("Client '%s' attempting to delete log ID %d", authorized_client, log_id)
     success = delete_main_log(db, log_id)
-    
+
     if not success:
         logger.warning("Failed to delete log ID %d: Not found", log_id)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log not found")
-        
+
     logger.info("Successfully deleted log ID %d by client '%s'", log_id, authorized_client)
     return {"success": True, "deleted_id": log_id}
 
@@ -122,13 +138,13 @@ async def update_log_endpoint(
     authorized_client: str = Depends(verify_api_code_and_log)
 ):
     logger.info("Client '%s' attempting to update log ID %d", authorized_client, log_id)
-    
+
     updated_log = update_main_log(
-        conn=db, 
+        conn=db,
         log_id=log_id,
-        steam_id=payload.steam_id, 
-        username=payload.username, 
-        punishment_duration=payload.punishment_duration, 
+        steam_id=payload.steam_id,
+        username=payload.username,
+        punishment_duration=payload.punishment_duration,
         server_name=payload.server_name,
         reason_given=payload.reason_given
     )
