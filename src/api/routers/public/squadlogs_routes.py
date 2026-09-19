@@ -11,6 +11,7 @@ from database.db_logs import (
     get_main_log_by_id,
     get_paginated_main_logs,
     update_main_log,
+    search_main_logs
 )
 from services.db_connection import get_db
 from services.security import verify_api_code_and_log
@@ -69,6 +70,18 @@ async def read_logs_endpoint(
         page,
         result.get("pagination", {}).get("total_count", 0)
     )
+    return result
+
+# Search functionality
+@router.get("/search", response_model = PaginatedLogsResponse)
+async def search_logs_endpoint(
+    search_query: str, 
+    page: int=Query(1, ge=1, description="Query page number to fetch"),
+    db: sqlite3.Connection = Depends(get_db)
+):
+    logger.info(f"Searching for results matching search query: {search_query}")
+    formatted_search_query = f"%{search_query.strip()}%"
+    result = search_main_logs(db, formatted_search_query, page)
     return result
 
 @router.get("/{log_id}", status_code=status.HTTP_200_OK)

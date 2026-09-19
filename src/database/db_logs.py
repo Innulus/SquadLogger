@@ -139,3 +139,41 @@ def delete_main_log(conn: sqlite3.Connection, log_id: int):
     except sqlite3.Error:
         return False
 
+def search_main_logs(conn: sqlite3.Connection, query: str, page: int = 1):
+    page = max(1, page)
+    
+    # Sanitize and clamp page size to MAX_PAGE_SIZE
+    page_size = settings.MAX_LOG_CHUNK_SIZE
+
+    offset = (page - 1) * page_size
+
+    # Fetch total count for pagination metadata
+    count_cursor = conn.execute("""SELECT COUNT(*) FROM main_logs 
+                                WHERE (id LIKE ? OR SteamID LIKE ? OR username LIKE ? or punishment_duration LIKE ? or server_name LIKE ? or reason_given LIKE ?)""", (query, query, query, query, query, query))
+    total_count = count_cursor.fetchone()[0]
+
+    total_pages = ceil(total_count / page_size) if total_count > 0 else 1
+
+    # Query chunk of logs
+    cursor = conn.execute(
+        """
+        SELECT * FROM main_logs 
+        WHERE (id LIKE ? OR SteamID LIKE ? OR username LIKE ? or punishment_duration LIKE ? or server_name LIKE ? or reason_given LIKE ?)
+        ORDER BY id ASC
+        LIMIT ? OFFSET ?
+        """,
+        (query, query, query, query, query, query, page_size, offset),
+    )
+    logs = cursor.fetchall()
+
+    return {
+        "items": [dict(row) for row in logs] if logs else [],
+        "pagination": {
+            "page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+            "total_pages": total_pages,
+            "has_next": page < total_pages,
+            "has_previous": page > 1,
+        },
+    }
